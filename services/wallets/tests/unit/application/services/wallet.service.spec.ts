@@ -27,20 +27,20 @@ describe('WalletService', () => {
   it('should credit amount to player wallet', async () => {
     const playerId = 'p1';
     const initialWallet = Wallet.create(playerId);
+    const initialBalance = initialWallet.balance;
     repository.findByPlayerId = mock(async () => initialWallet);
 
     await service.credit(playerId, 100n);
 
-    expect(initialWallet.balance).toBe(100n);
+    expect(initialWallet.balance).toBe(initialBalance + 100n);
     expect(repository.save).toHaveBeenCalledWith(initialWallet);
   });
 
   it('should throw error if debit amount is more than balance', async () => {
     const playerId = 'p1';
     const initialWallet = Wallet.create(playerId);
-    initialWallet.credit(50n);
     repository.findByPlayerId = mock(async () => initialWallet);
 
-    expect(service.debit(playerId, 100n)).rejects.toThrow('Insufficient balance');
+    expect(service.debit(playerId, 100001n)).rejects.toThrow('Insufficient balance');
   });
 });
