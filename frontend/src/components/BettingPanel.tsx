@@ -1,21 +1,30 @@
 import { motion, AnimatePresence } from 'framer-motion';
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from 'react-oidc-context';
 import { useGameStore, RoundStatus } from '../stores/useGameStore';
 import { api } from '../services/api';
+import { soundService } from '../services/sounds';
 import { toast } from 'sonner';
-import { X } from 'lucide-react';
+import { X, Bot } from 'lucide-react';
 import type { AxiosError } from 'axios';
+
+function MultiplierValue({ amount }: { amount: number }) {
+  const multiplier = useGameStore(state => state.multiplier);
+  return <span>R$ {(amount * multiplier).toFixed(2)}</span>;
+}
 
 export function BettingPanel() {
   const [amount, setAmount] = useState<string>('10.00');
   const [autoCashout, setAutoCashout] = useState<string>('');
+  const [isAutoBet, setIsAutoBet] = useState(false);
   const [isPending, setIsPending] = useState(false);
   
   const auth = useAuth();
-  const { status, multiplier, bets } = useGameStore();
+  
+  const status = useGameStore(state => state.status);
+  const bets = useGameStore(state => state.bets);
 
-  const myBet = bets.find(b => b.userId === auth.user?.profile.sub);
+  const myBet = bets.find(b => b.playerId === auth.user?.profile.sub);
   const hasBetInRound = !!myBet;
   const cashedOut = myBet?.cashedOut || false;
 
@@ -26,8 +35,8 @@ export function BettingPanel() {
   const canBet = status === RoundStatus.WAITING_FOR_BETS && !hasBetInRound && isAmountValid;
   const canCashOut = status === RoundStatus.IN_PROGRESS && hasBetInRound && !cashedOut;
 
-  const handleBet = async () => {
-    if (!auth.user) return;
+  const handleBet = useCallback(async () => {
+    if (!auth.user || isPending) return;
     if (!isAmountValid) {
       toast.error('A aposta deve ser entre R$ 1,00 e R$ 1.000,00');
       return;
@@ -41,23 +50,34 @@ export function BettingPanel() {
       }, {
         headers: { Authorization: `Bearer ${auth.user.access_token}` }
       });
+      soundService.playBet();
       toast.success('Aposta realizada com sucesso!');
     } catch (e: unknown) {
       const error = e as AxiosError<{ message: string }>;
       toast.error(error?.response?.data?.message || 'Falha ao apostar. Verifique seu saldo.');
+      if (isAutoBet) setIsAutoBet(false);
     } finally {
       setIsPending(false);
     }
-  };
+  }, [auth.user, isPending, isAmountValid, numAmount, numAutoCashout, isAutoBet]);
+
+  useEffect(() => {
+    if (status === RoundStatus.WAITING_FOR_BETS && isAutoBet && !hasBetInRound && !isPending) {
+      const timer = setTimeout(() => {
+        handleBet();
+      }, 50);
+      return () => clearTimeout(timer);
+    }
+  }, [status, isAutoBet, hasBetInRound, isPending, handleBet]);
 
   const handleCashOut = async () => {
-    if (!auth.user) return;
+    if (!auth.user || isPending) return;
     setIsPending(true);
     try {
-      const res = await api.post<{ multiplier: number, payout: number }>('/games/bet/cashout', {}, {
+      await api.post('/games/bet/cashout', {}, {
         headers: { Authorization: `Bearer ${auth.user.access_token}` }
       });
-      toast.success(`Saque realizado a ${res.data.multiplier}x! Você ganhou R$ ${Number(res.data.payout) / 100}`);
+      soundService.playCashout();
     } catch (e: unknown) {
       const error = e as AxiosError<{ message: string }>;
       toast.error(error?.response?.data?.message || 'Falha no cash out.');
@@ -68,7 +88,7 @@ export function BettingPanel() {
 
   const getBetButtonText = () => {
     if (isPending) return 'PROCESSANDO...';
-    if (!hasBetInRound) return 'APOSTAR';
+    if (!hasBetInRound) return isAutoBet ? 'AUTO APOSTANDO...' : 'APOSTAR';
     if (cashedOut) return 'SAQUE REALIZADO';
     if (!isNaN(numAutoCashout) && numAutoCashout >= 1.10) return `AUTO @ ${numAutoCashout.toFixed(2)}x`;
     return 'APOSTA FEITA';
@@ -78,10 +98,24 @@ export function BettingPanel() {
     <div className="bg-[#0c0c0e] p-6 rounded-4xl border border-white/10 shadow-2xl relative overflow-hidden group">
       <div className="absolute inset-0 bg-linear-to-br from-primary/5 to-transparent pointer-events-none opacity-50"></div>
       
-      <h2 className="text-xs font-black mb-6 uppercase tracking-[0.3em] text-muted-foreground flex items-center gap-2 relative z-10">
-        <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse shadow-[0_0_8px_rgba(255,255,255,0.8)]"></span>
-        Controles de Aposta
-      </h2>
+      <div className="flex justify-between items-center mb-6 relative z-10">
+        <h2 className="text-xs font-black uppercase tracking-[0.3em] text-muted-foreground flex items-center gap-2">
+          <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse shadow-[0_0_8px_rgba(255,255,255,0.8)]"></span>
+          Controles
+        </h2>
+        
+        <button 
+          onClick={() => setIsAutoBet(!isAutoBet)}
+          className={`flex items-center gap-2 px-3 py-1.5 rounded-lg border transition-all ${
+            isAutoBet 
+              ? 'bg-primary/20 border-primary/50 text-primary shadow-[0_0_15px_rgba(255,255,255,0.1)]' 
+              : 'bg-white/5 border-white/10 text-muted-foreground opacity-50 hover:opacity-100'
+          }`}
+        >
+          <Bot size={14} />
+          <span className="text-[10px] font-black uppercase tracking-widest">Auto Bet</span>
+        </button>
+      </div>
       
       <div className="space-y-6 relative z-10">
         <div className="flex flex-col gap-5">
@@ -144,7 +178,9 @@ export function BettingPanel() {
                className="w-full py-6 bg-green-500 text-white rounded-3xl font-black text-2xl shadow-[0_0_40px_rgba(16,185,129,0.3)] flex flex-col items-center justify-center leading-tight disabled:opacity-50 cursor-pointer overflow-hidden relative group/btn"
              >
                <span className="relative z-10">{isPending ? 'SACANDO...' : 'SACAR'}</span>
-               <span className="text-sm opacity-90 font-bold relative z-10">R$ {(numAmount * multiplier).toFixed(2)}</span>
+               <span className="text-sm opacity-90 font-bold relative z-10">
+                 <MultiplierValue amount={numAmount} />
+               </span>
              </motion.button>
           ) : (
              <motion.button 

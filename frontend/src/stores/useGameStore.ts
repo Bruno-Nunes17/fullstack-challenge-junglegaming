@@ -10,8 +10,8 @@ export const RoundStatus = {
 export type RoundStatus = keyof typeof RoundStatus;
 
 export interface Bet {
-  userId: string;
-  userName: string;
+  playerId: string;
+  username: string;
   amount: number;
   betId: string;
   cashedOut: boolean;
@@ -69,7 +69,9 @@ export const useGameStore = create<GameState>((set) => ({
   
   updateMultiplier: (m) => set({ multiplier: m, status: 'IN_PROGRESS' }),
   
-  addBet: (bet) => set((state) => ({ bets: [...state.bets, bet] })),
+  addBet: (bet) => set((state) => ({ 
+    bets: [...state.bets, { ...bet, cashedOut: bet.cashedOut || false }] 
+  })),
 
   updateBetCashout: (betId, multiplier, payout) => set((state) => ({
     bets: state.bets.map(bet => 

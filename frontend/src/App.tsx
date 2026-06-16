@@ -2,6 +2,7 @@ import { motion } from 'framer-motion';
 import { useEffect } from 'react';
 import { useAuth } from "react-oidc-context";
 import { socketService } from './services/socket';
+import { soundService } from './services/sounds';
 import { useGameStore, RoundStatus } from './stores/useGameStore';
 import type { Round, Bet, GameHistory } from './stores/useGameStore';
 import { CrashCanvas } from './components/CrashCanvas';
@@ -57,6 +58,7 @@ function App() {
 
     socketService.on<{ multiplier: number, serverSeed: string }>('round_crashed', (data) => {
       crash(data.multiplier, data.serverSeed);
+      soundService.playCrash();
     });
 
     socketService.on<Bet>('bet_placed', (data) => {
@@ -196,7 +198,7 @@ function App() {
                       ) : (
                         bets.map((bet: Bet, i: number) => (
                           <tr key={bet.betId || i} className={`transition-colors group ${bet.cashedOut ? 'bg-green-500/10' : 'hover:bg-white/5'}`}>
-                             <td className="px-8 py-4 font-bold text-sm">{bet.userName}</td>
+                             <td className="px-8 py-4 font-bold text-sm">{bet.username}</td>
                              <td className="px-8 py-4 text-sm font-mono text-muted-foreground">R$ {Number(bet.amount).toFixed(2)}</td>
                              <td className="px-8 py-4">
                                 {bet.cashedOut ? (
