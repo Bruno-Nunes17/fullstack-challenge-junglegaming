@@ -107,6 +107,7 @@ export class GamesController {
     betOrm.roundId = round.id;
     betOrm.amount = amountInCents;
     betOrm.status = BetStatus.PENDING;
+    betOrm.autoCashoutMultiplier = dto.autoCashoutMultiplier;
     await this.betRepository.save(betOrm);
 
     this.gateway.broadcast('bet_placed', {

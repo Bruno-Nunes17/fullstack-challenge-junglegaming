@@ -13,7 +13,6 @@ import { Wallet, History, Users, ShieldCheck } from 'lucide-react';
 function App() {
   const auth = useAuth();
   
-  
   const setRound = useGameStore(state => state.setRound);
   const reset = useGameStore(state => state.reset);
   const updateMultiplier = useGameStore(state => state.updateMultiplier);
@@ -109,7 +108,6 @@ function App() {
 
   return (
     <div className="min-h-screen bg-[#09090b] text-foreground flex flex-col relative overflow-hidden">
-      {}
       <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,var(--tw-gradient-stops))] from-primary/10 via-background to-background pointer-events-none"></div>
       <div className="absolute top-0 left-0 w-full h-full bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-10 pointer-events-none mix-blend-overlay"></div>
 
@@ -159,7 +157,7 @@ function App() {
              className="aspect-video bg-[#0c0c0e] rounded-4xl border border-white/10 relative overflow-hidden shadow-[0_0_50px_rgba(0,0,0,0.5)] group ring-1 ring-white/5"
           >
              <div className="absolute inset-0 bg-linear-to-t from-background/80 to-transparent pointer-events-none z-10"></div>
-             <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.03)_1px,transparent_1px)] bg-size-[40px_40px] pointer-events-none"></div>
+             <div className="absolute inset-0 pointer-events-none"></div>
              <CrashCanvas />
              
              <div className="absolute bottom-6 left-6 flex flex-col gap-2 z-20">

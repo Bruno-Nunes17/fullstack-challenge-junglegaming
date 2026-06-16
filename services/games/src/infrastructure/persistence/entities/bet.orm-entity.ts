@@ -36,6 +36,9 @@ export class BetOrmEntity {
   @Column('float', { nullable: true })
   cashOutMultiplier: number;
 
+  @Column('float', { name: 'auto_cashout_multiplier', nullable: true })
+  autoCashoutMultiplier: number;
+
   @Column('bigint', {
     nullable: true,
     transformer: {
