@@ -162,11 +162,13 @@ function App() {
              <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.03)_1px,transparent_1px)] bg-size-[40px_40px] pointer-events-none"></div>
              <CrashCanvas />
              
-             <div className="absolute bottom-6 left-6 flex items-center gap-2 bg-black/60 backdrop-blur-xl px-4 py-2 rounded-xl border border-white/10 z-20">
-                <ShieldCheck size={14} className="text-primary" />
-                <span className="text-[10px] font-mono text-muted-foreground truncate max-w-30">
-                  {serverSeedHash || 'Awaiting next round...'}
-                </span>
+             <div className="absolute bottom-6 left-6 flex flex-col gap-2 z-20">
+                <div className="flex items-center gap-2 bg-black/60 backdrop-blur-xl px-4 py-2 rounded-xl border border-white/10">
+                   <ShieldCheck size={14} className="text-primary" />
+                   <span className="text-[10px] font-mono text-muted-foreground truncate max-w-30">
+                     {serverSeedHash || 'Aguardando próxima rodada...'}
+                   </span>
+                </div>
              </div>
           </motion.div>
 

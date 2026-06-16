@@ -25,6 +25,11 @@ plugins:
       credentials: true
       max_age: 3600
 
+  - name: rate-limiting
+    config:
+      second: 10
+      policy: local
+
 services:
   - name: games-service
     url: http://games:4001
