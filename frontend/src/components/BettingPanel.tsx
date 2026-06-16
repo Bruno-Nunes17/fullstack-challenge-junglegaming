@@ -77,7 +77,6 @@ export function BettingPanel() {
       await api.post('/games/bet/cashout', {}, {
         headers: { Authorization: `Bearer ${auth.user.access_token}` }
       });
-      soundService.playCashout();
     } catch (e: unknown) {
       const error = e as AxiosError<{ message: string }>;
       toast.error(error?.response?.data?.message || 'Falha no cash out.');

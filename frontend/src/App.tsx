@@ -54,6 +54,7 @@ function App() {
 
     socketService.on<{ multiplier: number }>('multiplier_update', (data) => {
       updateMultiplier(data.multiplier);
+      soundService.playTick();
     });
 
     socketService.on<{ multiplier: number, serverSeed: string }>('round_crashed', (data) => {
@@ -65,8 +66,11 @@ function App() {
       addBet(data);
     });
 
-    socketService.on<{ betId: string, multiplier: number, payout: number }>('bet_cashed_out', (data) => {
+    socketService.on<{ playerId: string, multiplier: number, payout: number, betId: string }>('bet_cashed_out', (data) => {
       updateBetCashout(data.betId, data.multiplier, data.payout);
+      if (data.playerId === auth.user?.profile.sub) {
+        soundService.playCashout();
+      }
     });
 
     api.get<Round>('/games/rounds/current').then((res) => {
